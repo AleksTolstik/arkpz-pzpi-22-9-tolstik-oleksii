@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Container {
+  id_container       Int            @id @default(autoincrement())
+  operational_status Int?
+  network_status     Int?
+  id_patient         Int?
+  container_number   Int?
+  Patient            Patient?       @relation(fields: [id_patient], references: [id_patient], onDelete: NoAction, onUpdate: NoAction, map: "fk_container_patient")
+  Inventory          Inventory[]
+  Notification       Notification[]
+}
+
+model Doctor {
+  id_doctor    Int            @id @default(autoincrement())
+  email        String
+  password     String
+  last_name    String
+  first_name   String
+  patronymic   String?
+  birth_date   DateTime?      @db.Date
+  address      String?
+  id_role      Int?
+  UserRole     UserRole?      @relation(fields: [id_role], references: [id_role], onDelete: NoAction, onUpdate: NoAction, map: "fk_doctor_role")
+  Prescription Prescription[]
+}
+
+model Inventory {
+  id_inventory     Int         @id @default(autoincrement())
+  quantity         Int?
+  id_medication    Int?
+  id_container     Int?
+  id_type          Int?
+  inventory_number Int
+  Container        Container?  @relation(fields: [id_container], references: [id_container], onDelete: NoAction, onUpdate: NoAction, map: "fk_inventory_container")
+  Medication       Medication? @relation(fields: [id_medication], references: [id_medication], onDelete: NoAction, onUpdate: NoAction, map: "fk_inventory_medication")
+  Type             Type?       @relation(fields: [id_type], references: [id_type], onDelete: NoAction, onUpdate: NoAction, map: "fk_inventory_type")
+}
+
+model MedicalStaff {
+  id_medicalstaff Int       @id @default(autoincrement())
+  email           String
+  password        String
+  last_name       String
+  first_name      String
+  patronymic      String?
+  birth_date      DateTime? @db.Date
+  address         String?
+  speciality      String?
+  id_role         Int?
+  UserRole        UserRole? @relation(fields: [id_role], references: [id_role], onDelete: NoAction, onUpdate: NoAction, map: "fk_medical_staff_role")
+}
+
+model Medication {
+  id_medication            Int                        @id @default(autoincrement())
+  medication_name          String
+  medication_type          String?
+  description              String?
+  quantity                 Int?
+  manufacturer             String?
+  expiration_date          DateTime?                  @db.Date
+  Inventory                Inventory[]
+  MedicationInPrescription MedicationInPrescription[]
+}
+
+model MedicationInPrescription {
+  id_medication_in_prescription Int                        @id @default(autoincrement())
+  dosage_duration               String?
+  id_medication                 Int?
+  id_prescription               Int?
+  Prescription                  Prescription?              @relation(fields: [id_prescription], references: [id_prescription], onDelete: NoAction, onUpdate: NoAction, map: "fk_medication_in_prescription")
+  Medication                    Medication?                @relation(fields: [id_medication], references: [id_medication], onDelete: NoAction, onUpdate: NoAction, map: "fk_medication_prescription")
+  MedicationIntakeSchedule      MedicationIntakeSchedule[]
+}
+
+model MedicationIntakeSchedule {
+  id_intake_schedule            Int                       @id @default(autoincrement())
+  intake_time                   DateTime?                 @db.Time(6)
+  status                        Int?
+  id_medication_in_prescription Int?
+  MedicationInPrescription      MedicationInPrescription? @relation(fields: [id_medication_in_prescription], references: [id_medication_in_prescription], onDelete: NoAction, onUpdate: NoAction, map: "fk_intake_schedule")
+}
+
+model Notification {
+  id_notification Int        @id @default(autoincrement())
+  text            String
+  send_date       DateTime?  @db.Date
+  send_time       DateTime?  @db.Time(6)
+  id_container    Int?
+  Container       Container? @relation(fields: [id_container], references: [id_container], onDelete: NoAction, onUpdate: NoAction, map: "fk_notification_container")
+}
+
+model Patient {
+  id_patient   Int            @id @default(autoincrement())
+  email        String
+  password     String
+  last_name    String
+  first_name   String
+  patronymic   String?
+  birth_date   DateTime?      @db.Date
+  address      String?
+  id_role      Int?
+  Container    Container[]
+  UserRole     UserRole?      @relation(fields: [id_role], references: [id_role], onDelete: NoAction, onUpdate: NoAction, map: "fk_patient_role")
+  Prescription Prescription[]
+}
+
+model Pharmacist {
+  id_pharmacist Int       @id @default(autoincrement())
+  email         String
+  password      String
+  last_name     String
+  first_name    String
+  patronymic    String?
+  birth_date    DateTime? @db.Date
+  address       String?
+  id_role       Int?
+  UserRole      UserRole? @relation(fields: [id_role], references: [id_role], onDelete: NoAction, onUpdate: NoAction, map: "fk_pharmacist_role")
+}
+
+model Prescription {
+  id_prescription          Int                        @id @default(autoincrement())
+  diagnosis_name           String
+  prescription_date        DateTime?                  @db.Date
+  id_patient               Int?
+  id_doctor                Int?
+  MedicationInPrescription MedicationInPrescription[]
+  Doctor                   Doctor?                    @relation(fields: [id_doctor], references: [id_doctor], onDelete: NoAction, onUpdate: NoAction, map: "fk_prescription_doctor")
+  Patient                  Patient?                   @relation(fields: [id_patient], references: [id_patient], onDelete: NoAction, onUpdate: NoAction, map: "fk_prescription_patient")
+}
+
+model Type {
+  id_type   Int         @id @default(autoincrement())
+  type_name String
+  unit      String?
+  Inventory Inventory[]
+}
+
+model UserRole {
+  id_role      Int            @id @default(autoincrement())
+  role_name    String
+  Doctor       Doctor[]
+  MedicalStaff MedicalStaff[]
+  Patient      Patient[]
+  Pharmacist   Pharmacist[]
+}
